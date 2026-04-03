@@ -224,7 +224,7 @@
 
         function linkifyReferences(text) {
             text = text.replace(/\(B\/(\d+)\/(\d+)\)/g, '<br><a onclick="openModal(\'https://vedabase.io/en/library/bg/$1/$2/\', event)">📖 Read BG $1.$2</a>');
-            text = text.replace(/\(S(\d+)\/(\d+)\/(\d+)\)/g, '<br><a onclick="openModal(\'https://vedabase.io/en/library/sb/$1/$2/$3/\', event)">📖 Read SB $1.$2.$3</a>      <a onclick="openModal(\'http://https://deepakc577.github.io/sanskrit-dict/SD1.html?searchInput=$1.$2.$3\', event)">📖 Read SD SB $1.$2.$3</a>');
+            text = text.replace(/\(S(\d+)\/(\d+)\/(\d+)\)/g, '<br><a onclick="openModal(\'https://vedabase.io/en/library/sb/$1/$2/$3/\', event)">📖 Read SB $1.$2.$3</a>      <a onclick="openModal(\'https://deepakc577.github.io/sanskrit-dict/SD1.html?searchInput=$1.$2.$3\', event)">📖 Read SD SB $1.$2.$3</a>');
             return text;
         }
 
