@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sastra Verse Search</title>
+    <style>
+        /* Import beautiful fonts from Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Poppins:wght@400;500;600&display=swap');
+
+        /* Load the Balaram font */
+        @font-face {
+            font-family: 'Balaram';
+            src: url('balaram.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body {
+            /* Use Poppins for a clean, modern UI */
+            font-family: 'Poppins', sans-serif;
+            background-color: #f7f9fc;
+            color: #4a5568;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .card {
+            background: #fff;
+            padding: 35px 45px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            border: 1px solid #edf2f7;
+        }
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            font-weight: 600;
+            margin-bottom: 5px;
+            letter-spacing: -0.5px;
+        }
+        p.subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: #2b6cb0;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif;
+            transition: border-color 0.2s ease;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #3182ce;
+        }
+        input:disabled {
+            background-color: #f7fafc;
+            cursor: not-allowed;
+            color: #a0aec0;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #dd6b20;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(221, 107, 32, 0.2);
+        }
+        button:hover:not(:disabled) {
+            background-color: #c05621;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 8px rgba(221, 107, 32, 0.3);
+        }
+        button:disabled {
+            background-color: #cbd5e0;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+        #status {
+            font-size: 0.9em;
+            color: #d69e2e; 
+            margin-bottom: 25px;
+            font-weight: 500;
+            text-align: center;
+            padding: 12px;
+            background: #fffff0;
+            border-radius: 8px;
+            border: 1px solid #fefcbf;
+        }
+        
+        .result-container {
+            display: none;
+            margin-top: 20px;
+            padding: 35px 40px;
+            background: #fff;
+            border-top: 6px solid #3182ce;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            white-space: pre-wrap; 
+            
+            /* Use Balaram first, then fall back to the elegant Lora font */
+            font-family: 'Balaram', 'Lora', serif;
+            font-size: 1.2rem;
+            line-height: 1.8;
+            color: #2d3748;
+        }
+        
+        .error {
+            color: #e53e3e;
+            font-weight: 500;
+            font-family: 'Poppins', sans-serif;
+        }
+        .section-header {
+            font-weight: 600;
+            color: #2b6cb0;
+            font-size: 1.1em;
+            margin-top: 25px;
+            display: block;
+            font-family: 'Poppins', sans-serif; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>Bhagavatam Search</h1>
+        <p class="subtitle">Auto-loading "Canto 1 chapter 1.txt" from the local folder</p>
+
+        <div id="status">Loading file... Please wait.</div>
+
+        <div class="form-group">
+            <label for="searchInput">Search Verse (e.g., 1.1.1 or 1.1.7-8):</label>
+            <input type="text" id="searchInput" placeholder="Enter verse number..." disabled>
+        </div>
+
+        <button id="searchBtn" onclick="searchVerse()" disabled>Search Verse</button>
+    </div>
+
+    <div id="result" class="result-container"></div>
+
+    <script>
+        let verseDb = {};
+        const fileName = "Sarartha darsini (12 Cantos).txt"; 
+
+        window.onload = function() {
+            fetch(fileName + '?nocache=' + new Date().getTime())
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.arrayBuffer(); 
+                })
+                .then(buffer => {
+                    const decoder = new TextDecoder('windows-1252');
+                    const text = decoder.decode(buffer);
+                    
+                    processFile(text);
+                    const statusDiv = document.getElementById('status');
+                    statusDiv.innerText = `✅ Successfully loaded ${Object.keys(verseDb).length} verses!`;
+                    statusDiv.style.color = '#2f855a';
+                    statusDiv.style.background = '#f0fff4';
+                    statusDiv.style.borderColor = '#c6f6d5';
+                    
+                    const searchInputEl = document.getElementById('searchInput');
+                    const searchBtnEl = document.getElementById('searchBtn');
+                    searchInputEl.disabled = false;
+                    searchBtnEl.disabled = false;
+
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const queryParam = urlParams.get('searchInput');
+                    
+                    if (queryParam) {
+                        searchInputEl.value = queryParam;
+                        searchVerse(); 
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading file:', error);
+                    const statusDiv = document.getElementById('status');
+                    statusDiv.innerHTML = `
+                        <span class="error">❌ Error loading file.</span><br><br>
+                        <span style="font-weight:normal; font-size: 0.9em; color: #4a5568; font-family: 'Poppins', sans-serif;">
+                        <strong>Note:</strong> Make sure you are running a local server to bypass browser security.
+                        </span>
+                    `;
+                    statusDiv.style.background = '#fff5f5';
+                    statusDiv.style.borderColor = '#fed7d7';
+                });
+        };
+
+        function processFile(text) {
+            let cleanText = text.replace(/\\s*/g, '');
+            const regex = /\|\|\s*([\d\.\-]+)\s*\|\|/g;
+            let match;
+            let keys = [];
+            let indices = [];
+
+            while ((match = regex.exec(cleanText)) !== null) {
+                keys.push(match[1].trim());
+                indices.push(match.index);
+            }
+
+            verseDb = {};
+            for (let i = 0; i < keys.length; i++) {
+                let start = indices[i];
+                let end = (i + 1 < keys.length) ? indices[i + 1] : cleanText.length;
+                let content = cleanText.substring(start, end).trim();
+                verseDb[keys[i]] = content;
+            }
+        }
+
+        function searchVerse() {
+            let query = document.getElementById("searchInput").value.trim();
+            let resultDiv = document.getElementById("result");
+
+            if (query) {
+                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?searchInput=' + encodeURIComponent(query);
+                window.history.pushState({path:newUrl}, '', newUrl);
+            }
+
+            if (!query) {
+                resultDiv.style.display = "block";
+                resultDiv.innerHTML = '<span class="error">Please enter a verse number.</span>';
+                return;
+            }
+
+            if (verseDb[query]) {
+                resultDiv.style.display = "block";
+                
+                let formattedText = verseDb[query]
+                    .replace(/\nTranslation/g, '\n<span class="section-header">Translation</span>')
+                    .replace(/\nCommentary/g, '\n<span class="section-header">Commentary</span>');
+
+                resultDiv.innerHTML = formattedText;
+            } else {
+                let foundKeys = Object.keys(verseDb).filter(k => k.includes(query));
+                resultDiv.style.display = "block";
+                
+                if (foundKeys.length > 0) {
+                    resultDiv.innerHTML = `<span class="error">Exact verse not found. Did you mean: ${foundKeys.slice(0, 5).join(", ")}?</span>`;
+                } else {
+                    resultDiv.innerHTML = '<span class="error">Verse not found. Make sure the format matches (e.g., "1.1.1").</span>';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
